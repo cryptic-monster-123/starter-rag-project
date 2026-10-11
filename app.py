@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from rag.generate import answer  # noqa: E402
 
 st.set_page_config(page_title="SQuAD RAG", page_icon="🔎")
-st.title("🔎 SQuAD v2 RAG (Chroma + Claude)")
+st.title("🔎 SQuAD v2 RAG (Chroma + Ollama)")
 
 if "history" not in st.session_state:
     st.session_state.history = []

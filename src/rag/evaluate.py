@@ -1,13 +1,13 @@
 """Evaluate on SQuAD v2 questions.
 
 Metrics:
-- retrieval hit@k: gold passage is in the top-k (answerable questions only). No API calls.
-- answer accuracy (--generate): a gold answer string appears in Claude's reply for
+- retrieval hit@k: gold passage is in the top-k (answerable questions only). No LLM calls.
+- answer accuracy (--generate): a gold answer string appears in the model's reply for
   answerable questions; reply is "I don't know" for unanswerable ones.
 
 Usage:
     python -m rag.evaluate --n 200                 # retrieval only, free
-    python -m rag.evaluate --n 50 --generate       # also calls Claude
+    python -m rag.evaluate --n 50 --generate       # also calls the local LLM
 """
 import argparse
 import json

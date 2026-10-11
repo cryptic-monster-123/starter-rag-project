@@ -1,12 +1,12 @@
-# Starter RAG Project: SQuAD v2 + Chroma + Claude
+# Starter RAG Project: SQuAD v2 + Chroma + Ollama
 
 A basic retrieval-augmented generation (RAG) project. It indexes Wikipedia passages from
 [SQuAD v2](https://huggingface.co/datasets/rajpurkar/squad_v2) into a local
-[Chroma](https://www.trychroma.com/) vector DB and answers questions with Claude, citing the passages it used.
+[Chroma](https://www.trychroma.com/) vector DB and answers questions with a local open-source LLM via [Ollama](https://ollama.com), citing the passages it used.
 
 ```
 INGEST: SQuAD passages → embed (bge-small, local) → Chroma
-QUERY:  question → embed → top-k search → Claude (answer + [n] citations, or "I don't know")
+QUERY:  question → embed → top-k search → local LLM (answer + [n] citations, or "I don't know")
 ```
 
 ## Setup
@@ -14,7 +14,10 @@ QUERY:  question → embed → top-k search → Claude (answer + [n] citations, 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt && pip install -e .
-cp .env.example .env   # add your ANTHROPIC_API_KEY
+cp .env.example .env   # optional: change LLM_MODEL
+
+# Local model (runs fully on-device, no API key)
+ollama pull gemma3:4b    # make sure the Ollama app/server is running
 ```
 
 ## Run
@@ -35,8 +38,8 @@ streamlit run app.py
 SQuAD v2 includes gold answers and unanswerable questions, so you can measure quality:
 
 ```bash
-python -m rag.evaluate --n 500              # retrieval hit@5 only (no API calls)
-python -m rag.evaluate --n 50 --generate    # + answer accuracy (calls Claude)
+python -m rag.evaluate --n 500              # retrieval hit@5 only (no LLM calls)
+python -m rag.evaluate --n 50 --generate    # + answer accuracy (calls the local LLM)
 ```
 
 Per-question results go to `eval/results.jsonl`.
@@ -49,15 +52,18 @@ Per-question results go to `eval/results.jsonl`.
 | `src/rag/store.py` | Chroma persistent collection + embedding function |
 | `src/rag/ingest.py` | Download SQuAD v2, dedupe passages, upsert to Chroma |
 | `src/rag/retrieve.py` | Top-k vector search |
-| `src/rag/generate.py` | Prompt construction + Claude call |
+| `src/rag/generate.py` | Prompt construction + Ollama call |
 | `src/rag/cli.py` | Ask questions from the terminal |
 | `src/rag/evaluate.py` | Retrieval hit@k and answer accuracy |
 | `app.py` | Streamlit chat UI |
 
 ## Notes
 
-- Default model is `claude-opus-5-5` with low effort; change `CLAUDE_MODEL` in `.env` (e.g. `claude-sonnet-5-5` or `claude-haiku-5-5` for cheaper runs).
-- Server-side refusal fallback is enabled (`fallbacks="default"`), so a request declined by a safety classifier is retried on another model.
+- Default model is `gemma3:4b`; set `LLM_MODEL` in `.env` to any model you've pulled with Ollama
+  (e.g. `llama3.2:3b` for speed, or a larger 7–14B model for better accuracy if you have the RAM).
+- Generation uses temperature 0 so evaluation runs are repeatable.
+- Small models follow the "reply exactly: I don't know" instruction less reliably than large ones,
+  so expect lower accuracy on SQuAD's unanswerable questions.
 
 ## Next steps
 

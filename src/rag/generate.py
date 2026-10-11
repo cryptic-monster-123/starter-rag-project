@@ -1,4 +1,4 @@
-import anthropic
+import ollama
 
 from . import config
 from .retrieve import Chunk, retrieve
@@ -11,10 +11,10 @@ SYSTEM = """You answer questions using only the provided context passages.
 _client = None
 
 
-def client() -> anthropic.Anthropic:
+def client() -> ollama.Client:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        _client = ollama.Client(host=config.OLLAMA_HOST)
     return _client
 
 
@@ -25,17 +25,12 @@ def build_prompt(question: str, chunks: list[Chunk]) -> str:
 
 def answer(question: str, k: int = config.TOP_K) -> tuple[str, list[Chunk]]:
     chunks = retrieve(question, k)
-    response = client().beta.messages.create(
-        model=config.CLAUDE_MODEL,
-        max_tokens=2048,
-        system=SYSTEM,
-        output_config={"effort": "low"},
-        # Retry on another model if the request is declined by a safety classifier.
-        betas=["server-side-fallback-2026-07-01"],
-        fallbacks="default",
-        messages=[{"role": "user", "content": build_prompt(question, chunks)}],
+    response = client().chat(
+        model=config.LLM_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": build_prompt(question, chunks)},
+        ],
+        options={"temperature": 0, "num_ctx": 8192},
     )
-    if response.stop_reason == "refusal":
-        return "The model declined to answer this question.", chunks
-    text = "".join(b.text for b in response.content if b.type == "text").strip()
-    return text, chunks
+    return response.message.content.strip(), chunks

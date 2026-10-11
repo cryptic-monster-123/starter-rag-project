@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-opus-5-5")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemma3:4b")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 CHROMA_DIR = os.getenv("CHROMA_DIR", "./data/chroma")
 COLLECTION = os.getenv("COLLECTION", "squad_v2")
